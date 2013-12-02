@@ -6,7 +6,7 @@ from subprocess import call
 
 class GitAutoDeploy(BaseHTTPRequestHandler):
 
-    CONFIG_FILEPATH = './GitAutoDeploy.conf.json'
+    CONFIG_FILEPATH = './gitlabpost-receive.json'
     config = None
     quiet = False
     daemon = False
@@ -33,28 +33,22 @@ class GitAutoDeploy(BaseHTTPRequestHandler):
         return myClass.config
 
     def do_POST(self):
-        urls = self.parseRequest()
-        for url in urls:
-            paths = self.getMatchingPaths(url)
-            for path in paths:
-                self.pull(path)
-                self.deploy(path)
+        paths = self.getMatchingPaths(self.parseRequest())
+        for path in paths:
+            self.pull(path)
 
     def parseRequest(self):
         length = int(self.headers.getheader('content-length'))
         body = self.rfile.read(length)
-        post = urlparse.parse_qs(body)
-        items = []
-        for itemString in post['payload']:
-            item = json.loads(itemString)
-            items.append(item['repository']['url'])
+	      post = json.loads(body)
+        items = {'url': post['repository']['url'], 'ref': post['repository']['ref']}
         return items
 
-    def getMatchingPaths(self, repoUrl):
+    def getMatchingPaths(self, items):
         res = []
         config = self.getConfig()
         for repository in config['repositories']:
-            if(repository['url'] == repoUrl):
+            if(repository['url'] == items.url and repository['ref'] == items.ref):
                 res.append(repository['path'])
         return res
 
@@ -62,22 +56,14 @@ class GitAutoDeploy(BaseHTTPRequestHandler):
         self.send_response(200)
         self.send_header('Content-type', 'text/plain')
         self.end_headers()
+        self.wfile.write('<html><body><p>OK</p></body></html>')
 
     def pull(self, path):
         if(not self.quiet):
             print "\nPost push request received"
             print 'Updating ' + path
         call(['cd "' + path + '" && git pull'], shell=True)
-
-    def deploy(self, path):
-        config = self.getConfig()
-        for repository in config['repositories']:
-            if(repository['path'] == path):
-                if 'deploy' in repository:
-                     if(not self.quiet):
-                         print 'Executing deploy command'
-                     call(['cd "' + path + '" && ' + repository['deploy']], shell=True)
-                break
+        self.respond()
 
 def main():
     try:
@@ -114,3 +100,4 @@ def main():
 
 if __name__ == '__main__':
      main()
+
