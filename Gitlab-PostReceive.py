@@ -4,7 +4,7 @@ import json, urlparse, sys, os
 from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
 from subprocess import call
 
-class GitAutoDeploy(BaseHTTPRequestHandler):
+class GitlabPostReceive(BaseHTTPRequestHandler):
 
     CONFIG_FILEPATH = './gitlabpost-receive.json'
     config = None
@@ -70,23 +70,23 @@ def main():
         server = None
         for arg in sys.argv: 
             if(arg == '-d' or arg == '--daemon-mode'):
-                GitAutoDeploy.daemon = True
-                GitAutoDeploy.quiet = True
+                GitLabPostReceive.daemon = True
+                GitLabPostReceive.quiet = True
             if(arg == '-q' or arg == '--quiet'):
-                GitAutoDeploy.quiet = True
+                GitLabPostReceive.quiet = True
                 
-        if(GitAutoDeploy.daemon):
+        if(GitLabPostReceive.daemon):
             pid = os.fork()
             if(pid != 0):
                 sys.exit()
             os.setsid()
 
-        if(not GitAutoDeploy.quiet):
-            print 'Github Autodeploy Service v 0.1 started'
+        if(not GitLabPostReceive.quiet):
+            print 'Gitlab PostReceive Service v 0.1 started'
         else:
-            print 'Github Autodeploy Service v 0.1 started in daemon mode'
+            print 'Gitlab PostReceive Service v 0.1 started in daemon mode'
              
-        server = HTTPServer(('', GitAutoDeploy.getConfig()['port']), GitAutoDeploy)
+        server = HTTPServer(('', GitLabPostReceive.getConfig()['port']), GitLabPostReceive)
         server.serve_forever()
     except (KeyboardInterrupt, SystemExit) as e:
         if(e): # wtf, why is this creating a new line?
@@ -95,7 +95,7 @@ def main():
         if(not server is None):
             server.socket.close()
 
-        if(not GitAutoDeploy.quiet):
+        if(not GitLabPostReceive.quiet):
             print 'Goodbye'
 
 if __name__ == '__main__':
