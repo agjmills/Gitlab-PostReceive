@@ -1,4 +1,4 @@
-!http://logsol.github.com/Github-Auto-Deploy/images/Github-Auto-Deploy.png!
+!http://agjmills.github.io/Gitlab-PostReceive/images/gitlab-postreceive.jpg!
 
 h1. What is it?
 
