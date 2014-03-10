@@ -4,7 +4,7 @@ import json, urlparse, sys, os
 from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
 from subprocess import call
 
-class GitlabPostReceive(BaseHTTPRequestHandler):
+class GitLabPostReceive(BaseHTTPRequestHandler):
 
     CONFIG_FILEPATH = './gitlabpost-receive.json'
     config = None
@@ -40,15 +40,15 @@ class GitlabPostReceive(BaseHTTPRequestHandler):
     def parseRequest(self):
         length = int(self.headers.getheader('content-length'))
         body = self.rfile.read(length)
-	      post = json.loads(body)
-        items = {'url': post['repository']['url'], 'ref': post['repository']['ref']}
+        post = json.loads(body)
+        items = {'url': post['repository']['url'], 'ref': post['ref']}
         return items
 
     def getMatchingPaths(self, items):
         res = []
         config = self.getConfig()
         for repository in config['repositories']:
-            if(repository['url'] == items.url and repository['ref'] == items.ref):
+            if(repository['url'] == items['url'] and repository['ref'] == items['ref']):
                 res.append(repository['path'])
         return res
 
@@ -68,13 +68,13 @@ class GitlabPostReceive(BaseHTTPRequestHandler):
 def main():
     try:
         server = None
-        for arg in sys.argv: 
+        for arg in sys.argv:
             if(arg == '-d' or arg == '--daemon-mode'):
                 GitLabPostReceive.daemon = True
                 GitLabPostReceive.quiet = True
             if(arg == '-q' or arg == '--quiet'):
                 GitLabPostReceive.quiet = True
-                
+
         if(GitLabPostReceive.daemon):
             pid = os.fork()
             if(pid != 0):
@@ -85,7 +85,7 @@ def main():
             print 'Gitlab PostReceive Service v 0.1 started'
         else:
             print 'Gitlab PostReceive Service v 0.1 started in daemon mode'
-             
+
         server = HTTPServer(('', GitLabPostReceive.getConfig()['port']), GitLabPostReceive)
         server.serve_forever()
     except (KeyboardInterrupt, SystemExit) as e:
@@ -99,5 +99,4 @@ def main():
             print 'Goodbye'
 
 if __name__ == '__main__':
-     main()
-
+    main()
